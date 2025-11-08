@@ -1,51 +1,43 @@
 import streamlit as st
+import time
+import random
 
-st.set_page_config(page_title="Tic-Tac-Toe", page_icon="🎮")
-st.title("Tic-Tac-Toe Game")
-st.write("Play against yourself! Click on the buttons to place X or O.")
+st.set_page_config(page_title="Reaction Game", page_icon="🎯")
+st.title("Reaction Time Game 🎯")
+st.write("Click the button as fast as you can when it appears!")
 
-# Initialize game board
-if "board" not in st.session_state:
-    st.session_state.board = [""] * 9
-if "turn" not in st.session_state:
-    st.session_state.turn = "X"
-if "winner" not in st.session_state:
+# Initialize game state
+if "game_started" not in st.session_state:
+    st.session_state.game_started = False
+if "start_time" not in st.session_state:
+    st.session_state.start_time = 0
+if "reaction_time" not in st.session_state:
+    st.session_state.reaction_time = 0
+
+def start_game():
+    st.session_state.game_started = True
+    delay = random.uniform(2, 5)  # Random delay before button appears
+    time.sleep(delay)
+    st.session_state.start_time = time.time()
+
+def click_button():
+    st.session_state.reaction_time = round(time.time() - st.session_state.start_time, 3)
+    st.success(f"Your reaction time: {st.session_state.reaction_time} seconds")
+    st.session_state.game_started = False
+
+# Start / reset game
+if st.button("Start"):
+    start_game()
+
+# Show reaction button if game started
+if st.session_state.game_started:
+    if st.button("Click Me!"):
+        click_button()
+
+# Reset reaction time
+if st.button("Reset"):
+    st.session_state.reaction_time = 0
+    st.session_state.game_started = False
+
     st.session_state.winner = None
 
-def check_winner(board):
-    combos = [
-        [0,1,2], [3,4,5], [6,7,8], # rows
-        [0,3,6], [1,4,7], [2,5,8], # columns
-        [0,4,8], [2,4,6]           # diagonals
-    ]
-    for combo in combos:
-        a,b,c = combo
-        if board[a] == board[b] == board[c] and board[a] != "":
-            return board[a]
-    if "" not in board:
-        return "Draw"
-    return None
-
-# Display board
-for i in range(3):
-    cols = st.columns(3)
-    for j, col in enumerate(cols):
-        idx = i*3 + j
-        if col.button(st.session_state.board[idx] or " ", key=idx):
-            if st.session_state.board[idx] == "" and st.session_state.winner is None:
-                st.session_state.board[idx] = st.session_state.turn
-                st.session_state.turn = "O" if st.session_state.turn == "X" else "X"
-                st.session_state.winner = check_winner(st.session_state.board)
-
-# Show winner
-if st.session_state.winner:
-    if st.session_state.winner == "Draw":
-        st.success("It's a Draw!")
-    else:
-        st.success(f"{st.session_state.winner} Wins!")
-
-# Reset button
-if st.button("Reset Game"):
-    st.session_state.board = [""] * 9
-    st.session_state.turn = "X"
-    st.session_state.winner = None
