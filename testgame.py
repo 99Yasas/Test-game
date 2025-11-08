@@ -6,9 +6,9 @@ st.set_page_config(page_title="Car Dodge Game", page_icon="🚗")
 st.title("Car Dodge Game 🚗")
 st.write("Move your car (🚗) left or right to avoid obstacles (🚧)!")
 
-# Initialize state
+# Initialize game state
 if "car_pos" not in st.session_state:
-    st.session_state.car_pos = 2
+    st.session_state.car_pos = 2  # starting in middle
 if "obstacles" not in st.session_state:
     st.session_state.obstacles = []
 if "score" not in st.session_state:
@@ -19,15 +19,16 @@ if "last_update" not in st.session_state:
     st.session_state.last_update = time.time()
 
 ROAD_WIDTH = 5
-TICK_INTERVAL = 0.5  # seconds between ticks
+TICK_INTERVAL = 0.5  # seconds between game ticks
+MAX_ROWS = 10  # visible road rows
 
-# Functions
+# Move car functions
 def move_left():
     if st.session_state.car_pos > 0:
         st.session_state.car_pos -= 1
 
 def move_right():
-    if st.session_state.car_pos < ROAD_WIDTH-1:
+    if st.session_state.car_pos < ROAD_WIDTH - 1:
         st.session_state.car_pos += 1
 
 def reset_game():
@@ -37,21 +38,27 @@ def reset_game():
     st.session_state.game_over = False
     st.session_state.last_update = time.time()
 
+# Update game
 def update_game():
     now = time.time()
     if now - st.session_state.last_update > TICK_INTERVAL and not st.session_state.game_over:
-        # Move obstacles down
-        st.session_state.obstacles.insert(0, ["🚧" if random.random() < 0.3 else " " for _ in range(ROAD_WIDTH)])
-        if len(st.session_state.obstacles) > 10:
+        # Add a new row of obstacles at the top
+        new_row = ["🚧" if random.random() < 0.3 else " " for _ in range(ROAD_WIDTH)]
+        st.session_state.obstacles.insert(0, new_row)
+
+        # Keep only MAX_ROWS rows
+        if len(st.session_state.obstacles) > MAX_ROWS:
             st.session_state.obstacles.pop()
 
-        # Check collision
-        if len(st.session_state.obstacles) >= 10:
+        # Check collision (car is in bottom row)
+        if len(st.session_state.obstacles) == MAX_ROWS:
             if st.session_state.obstacles[-1][st.session_state.car_pos] == "🚧":
                 st.session_state.game_over = True
 
+        # Increase score if game not over
         if not st.session_state.game_over:
             st.session_state.score += 1
+
         st.session_state.last_update = now
 
 # Controls
@@ -87,6 +94,4 @@ st.text(road_display)
 if st.session_state.game_over:
     st.error(f"💥 Game Over! Final Score: {st.session_state.score}")
 
-pygame.quit()
-sys.exit()
 
